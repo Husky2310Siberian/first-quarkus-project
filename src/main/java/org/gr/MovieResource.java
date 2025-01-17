@@ -1,8 +1,16 @@
 package org.gr;
 
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
 import java.util.ArrayList;
@@ -12,12 +20,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Path("/movies")
+@Tag(name = "Movie Resource" , description = "Movie REST APIs")
 public class MovieResource {
 
     public static List<Movie> movies = new ArrayList<>();
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(operationId = "getMovies",
+                summary = "Get movies" ,
+                description = "Get all movies from List")
+
+    @APIResponse(responseCode = "200",
+                description = "Operation completed",
+                content = @Content(mediaType = MediaType.APPLICATION_JSON))
     public Response getMovies() {
         return Response.ok(movies).build();
     }
@@ -25,6 +41,13 @@ public class MovieResource {
     @GET
     @Path("/size")
     @Produces(MediaType.TEXT_PLAIN)
+    @Operation(operationId = "countMovies",
+            summary = "Count movies" ,
+            description = "Count all movies from List")
+
+    @APIResponse(responseCode = "200",
+            description = "Operation completed",
+            content = @Content(mediaType = MediaType.TEXT_PLAIN))
     public Integer countMovies() {
         return movies.size();
     }
@@ -32,17 +55,42 @@ public class MovieResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON )
-    public Response createMovie(Movie newMovie) {
+    @Operation(operationId = "createMovies",
+            summary = "Create new movie" ,
+            description = "Create a new movie and add in List")
+
+    @APIResponse(responseCode = "201",
+            description = "Movie created",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON))
+
+    public Response createMovie(@RequestBody(description = "movie to create",
+                                required = true ,
+                                content = @Content(schema = @Schema(implementation = Movie.class))) Movie newMovie) {
         movies.add(newMovie);
-        return Response.ok(movies).build();
+        return Response.status(Response.Status.CREATED).build();
     }
 
     @PUT
     @Path("{id}/{title}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(operationId = "updateMovies",
+            summary = "Update exist movie" ,
+            description = "Update  movie and add in List")
+
+    @APIResponse(responseCode = "200",
+            description = "Movie updated",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON))
     public Response updateMovie(
+            @Parameter(
+                    description = "Movie id ",
+                    required = true
+            )
             @PathParam("id") Long id,
+            @Parameter(
+                    description = "Movie title ",
+                    required = true
+            )
             @PathParam("title") String title
     ) {
         if (movies == null || movies.isEmpty()) {
@@ -71,6 +119,17 @@ public class MovieResource {
     @DELETE
     @Path("{id}")
     @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(operationId = "deleteMovies",
+            summary = "Delete exist movie" ,
+            description = "Delete  movie from a List")
+    @APIResponse(responseCode = "204",
+            description = "Movie deleted",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON))
+    @APIResponse(
+            responseCode = "400",
+            description = "Movie not valid",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON)
+    )
     public Response deleteMovie(@PathParam("id") Long id){
     Optional <Movie> movieToDelete =  movies.stream().filter(movie -> movie.getId().equals(id)).findFirst();
 
